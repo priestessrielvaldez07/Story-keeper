@@ -124,3 +124,34 @@ function loadUserData(user) {
   b.onclick = function () { window.scrollTo({ top: 0, behavior: "smooth" }); };
   document.body.appendChild(b);
 })();
+(function () {
+  const olds = ["imgbbBtn", "imgbbBtn2", "imgbbBtn3"];
+  for (const id of olds) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
+  if (document.getElementById("cldBtn")) return;
+  const mediaBox = document.getElementById("deskMedia"); if (!mediaBox) return;
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.id = "cldInput"; inp.style.display = "none";
+  const btn = document.createElement("button"); btn.id = "cldBtn"; btn.innerText = "Upload & Assign Photo";
+  btn.onclick = function () { inp.click(); };
+  inp.addEventListener("change", function () {
+    const f = inp.files[0]; if (!f) return;
+    const fd = new FormData();
+    fd.append("file", f);
+    fd.append("upload_preset", "jnklkxgk");
+    fetch("https://api.cloudinary.com/v1_1/equbrwx4/image/upload", { method: "POST", body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.secure_url) {
+          const url = j.secure_url;
+          if (!content.media.some(m => m.path === url)) content.media.push({ id: slugId(f.name) + "_" + (Date.now() % 1000), label: f.name, path: url });
+          const base = f.name.replace(/\.[^.]+$/, "");
+          const matched = content.characters.find(x => x.id === slugId(base) || x.name.toLowerCase() === base.toLowerCase());
+          saveContent(); renderAll();
+          deskAssignPicture(url, f.name, matched ? matched.id : (content.characters[0] ? content.characters[0].id : ""));
+        } else { alert("Upload failed: " + ((j && j.error && j.error.message) || "unknown")); }
+      })
+      .catch(function () { alert("Upload failed. Check internet."); });
+    inp.value = "";
+  });
+  mediaBox.parentNode.insertBefore(inp, mediaBox.nextSibling);
+  mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
+})();
