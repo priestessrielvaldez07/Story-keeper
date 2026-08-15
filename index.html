@@ -96,7 +96,13 @@ h3{margin:14px 0 4px 0}
   </div>
 </div>
 
-<script src="game1.js"></script>
-<script src="game2.js"></script>
+<script>
+(function () {
+  var t = Date.now();
+  document.write('<script src="game1.js?' + t + '"><\/script>');
+  document.write('<script src="game2.js?' + t + '"><\/script>');
+})();
+</script>
+
 </body>
 </html>
