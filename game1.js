@@ -370,3 +370,4 @@ function deskConfirmAssign() {
     if (b.innerText === "Reset Content" || b.innerText === "Restore Backup" || b.id === "restoreBackupBtn") b.style.display = "none";
   }
 })();
+function renderOwned() { ensureCollections(); let h = ""; for (const c of content.characters) { const o = state.owned[c.id]; let st = "Locked"; if (o) st = "Lv: " + o.level + " · Copies: " + o.copies + " · Rebind: " + o.ascension + "/" + content.rebinding.length + " · Affection: " + o.affection; const sel = selectedCharacterId === c.id ? " selected" : ""; const po = (c.images && c.images.portrait) ? c.images.portrait : ""; h += "<div class='char-btn" + sel + " rarity-" + c.rarity + "' onclick=\"viewCharacter('" + c.id + "')\">" + (po ? "<img class='game-img' style='max-height:70px' src='" + po + "'>" : "") + c.name + "<div class='small'>" + c.rarity + "★ · " + st + "</div></div>"; } document.getElementById("owned").innerHTML = card(h); }
