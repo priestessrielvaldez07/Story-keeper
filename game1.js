@@ -250,3 +250,20 @@ function deskClearPortrait() { const cid = getSelectValue("deskCharSelect"); if 
     inp.value = "";
   });
 })();
+function deskPickPhoto() { const inp = document.getElementById("photoInput"); if (!inp) { alert("Photo input missing."); return; } inp.style.display = "block"; inp.style.position = "fixed"; inp.style.left = "-9999px"; inp.style.opacity = "0"; inp.click(); }
+function deskClearPortrait() { const cid = getSelectValue("deskCharSelect"); if (!cid) { alert("No character selected."); return; } const c = content.characters.find(x => x.id === cid); if (!c) return; if (!c.images) c.images = {}; c.images.portrait = ""; saveContent(); renderAll(); alert("Portrait cleared."); }
+if (!window.__photoWired) {
+  window.__photoWired = true;
+  const inp = document.getElementById("photoInput");
+  if (inp) inp.addEventListener("change", function () {
+    const f = inp.files[0]; if (!f) return;
+    const storage = firebase.storage();
+    const ref = storage.ref("media/" + Date.now() + "_" + f.name);
+    ref.put(f).then(function (s) { return s.ref.getDownloadURL(); }).then(function (url) {
+      content.media.push({ id: slugId(f.name) + "_" + (Date.now() % 1000), label: f.name, path: url });
+      saveContent(); renderAll();
+      alert("Uploaded! Select it in the media dropdown, pick a character, and tap Set Portrait.");
+    }).catch(function (e) { alert("Upload failed. Check Storage rules."); });
+    inp.value = "";
+  });
+}
