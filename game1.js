@@ -267,3 +267,46 @@ if (!window.__photoWired) {
     inp.value = "";
   });
 }
+const IMGBB_KEY = "35d8627a33f5a68428394711d706bea9";
+if (!window.__imgbbWired) {
+  window.__imgbbWired = true;
+  (function () {
+    const all = document.querySelectorAll("#tab-desk button");
+    for (const b of all) { if (b.innerText === "Upload Photo from Phone") b.style.display = "none"; }
+    const mediaBox = document.getElementById("deskMedia");
+    if (!mediaBox || document.getElementById("imgbbBtn")) return;
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = "image/*"; inp.id = "imgbbInput"; inp.style.display = "none";
+    const btn = document.createElement("button");
+    btn.id = "imgbbBtn"; btn.innerText = "Upload Photo (ImgBB)";
+    btn.onclick = function () { inp.click(); };
+    inp.addEventListener("change", function () {
+      const f = inp.files[0]; if (!f) return;
+      const reader = new FileReader();
+      reader.onload = function () {
+        const b64 = String(reader.result).split(",")[1];
+        const fd = new FormData();
+        fd.append("image", b64);
+        fd.append("name", f.name.replace(/\.[^.]+$/, ""));
+        fetch("https://api.imgbb.com/1/upload?key=" + IMGBB_KEY, { method: "POST", body: fd })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.data && j.data.url) {
+              const url = j.data.url;
+              if (!content.media.some(m => m.path === url)) content.media.push({ id: slugId(f.name) + "_" + (Date.now() % 1000), label: f.name, path: url });
+              const base = f.name.replace(/\.[^.]+$/, "");
+              const c = content.characters.find(x => x.id === slugId(base) || x.name.toLowerCase() === base.toLowerCase());
+              if (c) { if (!c.images) c.images = {}; c.images.portrait = url; }
+              saveContent(); renderAll();
+              alert("Uploaded!" + (c ? " " + c.name + " portrait set." : " Select it in the media dropdown."));
+            } else { alert("Upload failed. ImgBB refused it."); }
+          })
+          .catch(function (e) { alert("Upload failed. Check internet."); });
+      };
+      reader.readAsDataURL(f);
+      inp.value = "";
+    });
+    mediaBox.parentNode.insertBefore(inp, mediaBox.nextSibling);
+    mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
+  })();
+}
