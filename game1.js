@@ -310,3 +310,57 @@ if (!window.__imgbbWired) {
     mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
   })();
 }
+function deskAssignPicture(url, label, preId) {
+  window.__pendingUrl = url;
+  const box = deskFormContainer();
+  let opts = "";
+  for (const c of content.characters) opts += "<option value='" + c.id + "'" + (c.id === preId ? " selected" : "") + ">" + c.name + "</option>";
+  box.innerHTML = "<div class='card'><strong>Assign “" + label + "” to:</strong><select id='assignCharSelect'>" + (opts || "<option value=''>none</option>") + "</select><button onclick=\"deskConfirmAssign()\">Set Portrait</button><button onclick=\"deskCloseForm()\">Skip</button></div>";
+  box.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+function deskConfirmAssign() {
+  const url = window.__pendingUrl;
+  const id = getSelectValue("assignCharSelect");
+  const c = content.characters.find(x => x.id === id);
+  if (c && url) { if (!c.images) c.images = {}; c.images.portrait = url; saveContent(); renderAll(); alert(c.name + " portrait set!"); }
+  deskCloseForm();
+}
+(function () {
+  const old = document.getElementById("imgbbBtn");
+  if (old) old.style.display = "none";
+  if (document.getElementById("imgbbBtn2")) return;
+  const mediaBox = document.getElementById("deskMedia");
+  if (!mediaBox) return;
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*"; inp.id = "imgbbInput2"; inp.style.display = "none";
+  const btn = document.createElement("button");
+  btn.id = "imgbbBtn2"; btn.innerText = "Upload & Assign Photo";
+  btn.onclick = function () { inp.click(); };
+  inp.addEventListener("change", function () {
+    const f = inp.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      const b64 = String(reader.result).split(",")[1];
+      const fd = new FormData();
+      fd.append("image", b64);
+      fd.append("name", f.name.replace(/\.[^.]+$/, ""));
+      fetch("https://api.imgbb.com/1/upload?key=" + IMGBB_KEY, { method: "POST", body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.data && j.data.url) {
+            const url = j.data.url;
+            if (!content.media.some(m => m.path === url)) content.media.push({ id: slugId(f.name) + "_" + (Date.now() % 1000), label: f.name, path: url });
+            const base = f.name.replace(/\.[^.]+$/, "");
+            const matched = content.characters.find(x => x.id === slugId(base) || x.name.toLowerCase() === base.toLowerCase());
+            saveContent(); renderAll();
+            deskAssignPicture(url, f.name, matched ? matched.id : (content.characters[0] ? content.characters[0].id : ""));
+          } else { alert("Upload failed. ImgBB refused it."); }
+        })
+        .catch(function () { alert("Upload failed. Check internet."); });
+    };
+    reader.readAsDataURL(f);
+    inp.value = "";
+  });
+  mediaBox.parentNode.insertBefore(inp, mediaBox.nextSibling);
+  mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
+})();
