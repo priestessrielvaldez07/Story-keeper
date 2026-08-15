@@ -155,3 +155,27 @@ function loadUserData(user) {
   mediaBox.parentNode.insertBefore(inp, mediaBox.nextSibling);
   mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
 })();
+function renderDesk() {
+  let me = ""; for (const m of content.media) me += "<option value='" + m.id + "'>" + m.label + "</option>";
+  document.getElementById("deskMedia").innerHTML = card("<div class='small'>Selected media:</div><select id='deskMediaSelect'>" + (me || "<option value=''>none</option>") + "</select>");
+  let ba = ""; for (const b of content.banners) ba += "<option value='" + b.id + "'>" + b.name + "</option>";
+  let ch = ""; for (const c of content.characters) ch += "<option value='" + c.id + "'>" + c.name + "</option>";
+  let fo = ""; for (const f of content.refreshments) fo += "<option value='" + f.id + "'>" + f.name + "</option>";
+  let re = ""; for (const r of content.relationships) re += "<option value='" + r.id + "'>" + r.name + "</option>";
+  let ex = ""; for (const e of content.expeditions) ex += "<option value='" + e.id + "'>" + e.name + "</option>";
+  document.getElementById("deskBanners").innerHTML = card("<div class='small'>Selected banner:</div><select id='deskBannerSelect'>" + (ba || "<option value=''>none</option>") + "</select>");
+  document.getElementById("deskCharacters").innerHTML = card("<div class='small'>Selected character:</div><select id='deskCharSelect'>" + (ch || "<option value=''>none</option>") + "</select>");
+  document.getElementById("deskRelationships").innerHTML = card("<div class='small'>Selected relationship:</div><select id='deskRelSelect'>" + (re || "<option value=''>none</option>") + "</select>");
+  document.getElementById("deskRefreshments").innerHTML = card("<div class='small'>Selected refreshment:</div><select id='deskFoodSelect'>" + (fo || "<option value=''>none</option>") + "</select>");
+  document.getElementById("deskExpeditions").innerHTML = card("<div class='small'>Selected expedition:</div><select id='deskExpSelect'>" + (ex || "<option value=''>none</option>") + "</select>");
+  let art = document.getElementById("artControls");
+  if (!art) { art = document.createElement("div"); art.id = "artControls"; const mediaBox = document.getElementById("deskMedia"); mediaBox.parentNode.insertBefore(art, mediaBox.nextSibling); }
+  art.innerHTML = card("<div class='small'>Set Portrait on:</div><select id='artCharSelect'>" + (ch || "<option value=''>none</option>") + "</select><div class='small'>Set Banner Art on:</div><select id='artBannerSelect'>" + (ba || "<option value=''>none</option>") + "</select><div class='small'>Set Icon on:</div><select id='artFoodSelect'>" + (fo || "<option value=''>none</option>") + "</select>");
+}
+function deskSetCharacterImage() { const cid = getSelectValue("artCharSelect") || getSelectValue("deskCharSelect"); if (!cid) { alert("Pick a character first."); return; } const path = getSelectedMediaPath(); if (!path) { alert("Add or upload media first."); return; } const c = content.characters.find(x => x.id === cid); if (!c) return; if (!c.images) c.images = {}; c.images.portrait = path; saveContent(); renderAll(); alert(c.name + " portrait set."); }
+function deskSetBannerImage() { const bid = getSelectValue("artBannerSelect") || getSelectValue("deskBannerSelect"); if (!bid) { alert("Pick a banner first."); return; } const path = getSelectedMediaPath(); if (!path) { alert("Add or upload media first."); return; } const b = content.banners.find(x => x.id === bid); if (!b) return; if (!b.images) b.images = {}; b.images.background = path; saveContent(); renderAll(); alert(b.name + " art set."); }
+function deskSetFoodImage() { const fid = getSelectValue("artFoodSelect") || getSelectValue("deskFoodSelect"); if (!fid) { alert("Pick a refreshment first."); return; } const path = getSelectedMediaPath(); if (!path) { alert("Add or upload media first."); return; } const f = content.refreshments.find(x => x.id === fid); if (!f) return; if (!f.images) f.images = {}; f.images.icon = path; saveContent(); renderAll(); alert(f.name + " icon set."); }
+(function () {
+  const btns = document.querySelectorAll("#tab-desk button");
+  for (const b of btns) { if (b.innerText === "Clear Selected Portrait") b.style.display = "none"; }
+})();
