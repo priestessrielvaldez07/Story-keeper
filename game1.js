@@ -364,3 +364,9 @@ function deskConfirmAssign() {
   mediaBox.parentNode.insertBefore(inp, mediaBox.nextSibling);
   mediaBox.parentNode.insertBefore(btn, inp.nextSibling);
 })();
+(function () {
+  const btns = document.querySelectorAll("#tab-desk button");
+  for (const b of btns) {
+    if (b.innerText === "Reset Content" || b.innerText === "Restore Backup" || b.id === "restoreBackupBtn") b.style.display = "none";
+  }
+})();
