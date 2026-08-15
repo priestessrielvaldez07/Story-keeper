@@ -179,3 +179,12 @@ function deskSetFoodImage() { const fid = getSelectValue("artFoodSelect") || get
   const btns = document.querySelectorAll("#tab-desk button");
   for (const b of btns) { if (b.innerText === "Clear Selected Portrait") b.style.display = "none"; }
 })();
+function updateStatus() { regenCandlelight(); document.getElementById("currencies").innerHTML = "<span class='cur'>💎 " + state.shards + "</span> <span class='cur'>🪶 " + state.quills + "</span> <span class='cur'>📜 " + state.pages + "</span> <span class='cur'>🕯 " + state.candlelight + "/" + CANDLELIGHT_MAX + "</span>"; }
+function repairIbbUrls() { let cleared = 0; const dead = function (u) { return !!u && u.indexOf("ibb.co/") !== -1; }; for (const m of content.media) if (dead(m.path)) { m.path = ""; cleared++; } content.media = content.media.filter(m => m.path !== ""); for (const c of content.characters) if (c.images && dead(c.images.portrait)) { c.images.portrait = ""; cleared++; } if (cleared) { try { localStorage.setItem(CONTENT_KEY, JSON.stringify(content)); } catch (e) {} } }
+(function () {
+  const st = document.createElement("style");
+  st.textContent = ".topbar{flex-direction:column;align-items:stretch;gap:6px}.topbar .actions{justify-content:space-between;align-items:center;width:100%}.topbar #currencies{display:flex;flex-wrap:wrap;gap:6px}.cur{background:#2b2142;padding:4px 8px;border-radius:8px;font-size:13px;color:#d9cff7}#userEmail{font-size:11px}";
+  document.head.appendChild(st);
+  const ps = document.querySelectorAll("body > p");
+  for (const p of ps) { if (p.innerText && p.innerText.indexOf("Step") === 0) p.style.display = "none"; }
+})();
