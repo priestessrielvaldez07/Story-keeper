@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Keeper</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+body{background:#14101f;color:white;font-family:system-ui;padding:16px;padding-bottom:30px}
+.card{background:#221a33;border-radius:14px;padding:12px;margin:10px 0}
+.small{color:#b9a9e6;font-size:13px;margin-top:4px}
+.placeholder{background:#3a2f55;height:70px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#d9cff7;margin:8px 0}
+.game-img{width:100%;border-radius:10px;max-height:340px;object-fit:contain;margin:8px 0;background:#221a33}
+select,input{width:100%;margin:6px 0;padding:10px;border-radius:10px;border:0;background:#2b2142;color:white;font-size:14px}
+button{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:0;font-size:16px;background:#7c5cff;color:white}
+button:disabled{background:#44395e;color:#8d7fb0}
+.topbar{display:flex;flex-direction:column;gap:6px;background:#221a33;padding:10px;border-radius:12px;margin:10px 0}
+.topbar .actions{display:flex;justify-content:space-between;align-items:center;width:100%;gap:6px}
+.topbar .actions button{width:auto;margin:0;padding:8px 12px;font-size:12px}
+#currencies{display:flex;flex-wrap:wrap;gap:6px}
+.cur{background:#2b2142;padding:4px 8px;border-radius:8px;font-size:13px;color:#d9cff7}
+#userEmail{font-size:11px;color:#b9a9e6}
+.tabs{display:flex;gap:5px;margin:10px 0;flex-wrap:wrap}
+.tabs button{flex:1 1 30%;width:auto;margin:0;padding:10px 4px;font-size:12px;background:#33284d}
+.tabs button.active{background:#7c5cff}
+.rarity-5{color:gold;font-weight:bold}
+.rarity-4{color:#cc66ff;font-weight:bold}
+.rarity-3{color:#66ccff}
+.result-item{background:#2b2142;padding:10px;border-radius:10px;margin:6px 0}
+.history-item{padding:4px 0}
+.char-btn{background:#2b2142;border-radius:10px;padding:10px;margin:6px 0;border:2px solid transparent}
+.char-btn.selected{border-color:#7c5cff}
+.reaction-line{font-size:17px;font-weight:bold;margin-top:8px}
+.dialogue-line{background:#2b2142;padding:8px;border-radius:8px;margin:6px 0}
+.dialogue-name{color:#9f8cff;font-weight:bold;font-size:12px;margin-bottom:2px}
+h1{margin-bottom:4px}
+h3{margin:14px 0 4px 0}
+#loginScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#14101f;z-index:9999;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px}
+.login-box{background:#221a33;padding:20px;border-radius:16px;width:100%;max-width:300px;text-align:center}
+.login-error{color:#ff6666;font-size:12px;margin-top:10px;min-height:18px}
+</style>
+</head>
+<body>
+<h1>Story Keeper</h1>
+
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>Story Keeper</h2>
+    <p class="small">Login or Register to save online.</p>
+    <input type="email" id="authEmail" placeholder="Email">
+    <input type="password" id="authPassword" placeholder="Password">
+    <button onclick="doLogin()">Login</button>
+    <button onclick="doRegister()">Register</button>
+    <div class="login-error" id="authError"></div>
+  </div>
+</div>
+
+<div id="gameApp" style="display:none;">
+  <div class="topbar">
+    <span id="currencies"></span>
+    <div class="actions">
+      <span id="userEmail"></span>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button id="tab-btn-inscribe" class="active" onclick="showTab('inscribe')">Inscribe</button>
+    <button id="tab-btn-team" onclick="showTab('team')">Team</button>
+    <button id="tab-btn-reading" onclick="showTab('reading')">Reading</button>
+    <button id="tab-btn-companions" onclick="showTab('companions')">Companions</button>
+    <button id="tab-btn-archive" onclick="showTab('archive')">Archive</button>
+    <button id="tab-btn-desk" onclick="showTab('desk')" style="display:none;">Desk</button>
+  </div>
+  <div id="tab-inscribe" class="tab-page"><div id="banners"></div><h3>Result</h3><div id="result"></div><h3>History</h3><div id="history"></div></div>
+  <div id="tab-team" class="tab-page" style="display:none;"><h3>Team</h3><div id="teamSlots"></div><h3>Add Companion</h3><div id="teamAdd"></div><h3>Shared Chapter Bonuses</h3><div id="teamBonds"></div><h3>Team Stats</h3><div id="teamStats"></div><h3>Expeditions</h3><div id="expeditionList"></div><h3>Expedition Result</h3><div id="expeditionResult"></div></div>
+  <div id="tab-reading" class="tab-page" style="display:none;"><div id="readingRoomButtons"></div><div id="readingRoomScene"></div></div>
+  <div id="tab-companions" class="tab-page" style="display:none;"><h3>Character Details</h3><div id="characterDetail"></div><h3>Owned Companions</h3><div id="owned"></div></div>
+  <div id="tab-archive" class="tab-page" style="display:none;"><h3>Gift Box</h3><div id="giftBox"></div><h3>Refreshments</h3><div id="inventory"></div><h3>Materials</h3><div id="materials"></div><h3>Food Reaction</h3><div id="foodReaction"></div><h3>Bookmarks</h3><div id="memories"></div></div>
+  <div id="tab-desk" class="tab-page" style="display:none;">
+    <h3>Keeper’s Desk (GM)</h3>
+    <h3>GM Tools</h3>
+    <button onclick="addShards()">+ Shards</button><button onclick="addQuills()">+ Quills</button><button onclick="addPages()">+ Pages</button><button onclick="addCandlelight()">+ Light</button><button onclick="resetSave()">Reset Player Save</button>
+    <h3>Art / Media</h3><div id="deskMedia"></div>
+    <button onclick="deskAddMedia()">Add Media</button><button onclick="deskDeleteMedia()">Delete Media</button><button onclick="deskSetCharacterImage()">Set Portrait</button><button onclick="deskSetBannerImage()">Set Banner Art</button><button onclick="deskSetFoodImage()">Set Icon</button><button onclick="deskSetReadingBackground()">Set Reading BG</button>
+    <h3>Banners</h3><div id="deskBanners"></div><button onclick="deskEditBanner()">Edit Banner</button>
+    <h3>Characters</h3><div id="deskCharacters"></div><button onclick="deskAddCharacter()">Add</button><button onclick="deskEditCharacter()">Edit</button><button onclick="deskDeleteCharacter()">Delete</button>
+    <h3>Relationships</h3><div id="deskRelationships"></div><button onclick="deskAddRelationship()">Add</button><button onclick="deskEditRelationship()">Edit</button><button onclick="deskDeleteRelationship()">Delete</button>
+    <h3>Refreshments</h3><div id="deskRefreshments"></div><button onclick="deskAddRefreshment()">Add</button><button onclick="deskEditRefreshment()">Edit</button><button onclick="deskDeleteRefreshment()">Delete</button>
+    <h3>Expeditions</h3><div id="deskExpeditions"></div><button onclick="deskAddExpedition()">Add</button><button onclick="deskEditExpedition()">Edit</button><button onclick="deskDeleteExpedition()">Delete</button>
+    <h3>GM Gifts</h3><button onclick="deskSendGift()">Send Gift</button>
+    <h3>Data</h3><button onclick="deskExport()">Export</button><button onclick="deskImport()">Import</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var t = Date.now();
+  document.write('<script src="game1.js?' + t + '"><\/script>');
+  document.write('<script src="game2.js?' + t + '"><\/script>');
+})();
+</script>
+<script>
+function updateStatus() { regenCandlelight(); document.getElementById("currencies").innerHTML = "<span class='cur'>💎 " + state.shards + "</span><span class='cur'>🪶 " + state.quills + "</span><span class='cur'>📜 " + state.pages + "</span><span class='cur'>🕯 " + state.candlelight + "/" + CANDLELIGHT_MAX + "</span>"; }
+</script>
+</body>
+</html>
